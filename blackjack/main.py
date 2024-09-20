@@ -34,10 +34,10 @@ class Deck:
     A deck is composed by 52 cards
     """
     def __init__(self):
-        self.cards = Deck.build_cards()
+        self.cards = Deck.build()
 
     @classmethod
-    def build_cards(cls):
+    def build(cls):
         deck = []
         for suit in suits:
             for rank in ranks:
@@ -50,8 +50,7 @@ class Deck:
 
     def deal_one(self):
         """get one card from the deck"""
-        return self.cards.pop(blackjack, or twenty-one, Card game whose object is to be dealt cards having a higher count than those of the dealer, up to but not exceeding 21. 0)
-
+        return self.cards.pop(0)
 
 # set up the Player
 class Player:
