@@ -38,11 +38,21 @@ class Deck:
 
     @classmethod
     def build(cls):
+        """
+        a class method to build a deck
+        """
         deck = []
         for suit in suits:
             for rank in ranks:
                 deck.append(Card(suit, rank))
         return deck
+
+    def __str__(self):
+
+       deck_comp = ""
+       for card in self.cards:
+           deck_comp += "\n" + card.__str__()
+       return "The deck has: " +deck_comp
 
     def shuffle_cards(self):
         """shuffle cards"""
@@ -66,7 +76,7 @@ class Player:
         self.cards = []
 
 
-    def tally_cards(self):
+    def values(self):
         """
         totalize player card value
         an Ace can take as value 1 or 11
@@ -78,18 +88,19 @@ class Player:
             return value - 10
         return value
 
-    def player_move(self):
+    def set_move(self):
         """
         get the player move
         """
         move = ""
         while move  not in ["Hit", "Stand"]:
-            move = input("Hit or Stand?:  ")
+            move = input(f"{self.name}, Hit or Stand?:  ")
         return move
 
     def play_again(self):
         """
         ask the player if he want to play again
+        the player should also have enough chips to bet
         """
         replay = ""
         while replay  not in ["Yes", "No"]:
@@ -107,9 +118,15 @@ class BoardGame():
     setting up a round
     """
 
-    def __init__(self, bet, player_number=1):
+    def __init__(self, bet=44, player_number=1):
         self.player_number=player_number
         self.bet = bet
+
+    def set_bet_amount(self, player_chips):
+        bet = 44
+        while bet > player_chips:
+            bet = int(input("How much chips do you want to bet?: "))
+        return bet
 
     def set_initial_cards(self, player, dealer, deck):
         """
@@ -117,36 +134,44 @@ class BoardGame():
         """
         for _ in range(2):
             player.cards.append(deck.deal_one())
+        for _ in range(2):
             dealer.cards.append(deck.deal_one())
         return(player.cards, dealer.cards[0])
+
+    def win_check(self, player, dealer):
+        """Check who is winning the current round"""
+        v1 = player.values()
+        v2 = dealer.values()
+        print(v1)
+        if (v1 == v2 or (v1 > 21 and v2 > 21)) :
+            return "Game Tie, Push ..."
+        elif v1 == 21:
+            player.chips += self.bet + ( 2/3 * self.bet)
+            return "Black Jack , Player has win"
+        elif v2 == 21:
+            player.chips -= self.bet + (2/3 * self.bet)
+            return "Black Jack , Player has lost"
+        elif v1 > 21:
+            player.chips -= self.bet
+            return "The Player is Busting!"
+        elif v2 > 21:
+            player.chips += self.bet
+            return "The Dealer is Busting! Player has win"
+        elif v2 > v1 :
+            player.chips -= self.bet
+            return "The Dealer is closer to 21! Player has lost"
+        else:
+            player.chips -= self.bet
+            return "The Player is closer 21! Player has win"
+
 
     def display_card(self, user):
         """Show player card"""
         if user.role == "guest":
-             print(f"{user.name}, your cards are: ")
-             print(",".join([f"{card.rank} of {card.suit}" for card in
-                             user.cards]))
+             print("Romeo, your cards are: ", *user.cards)
         else:
-            print(f" MrWhite : My first card is {user.cards[0]}")
+            print(f"MrWhite : My second card is {user.cards[-1]}")
 
-
-    def win_check(self, player, dealer):
-         """Check who win the round"""
-         if player.tally_cards() > 21:
-             player.chips -= bet
-             print(f"Bust!  you have lost. Current wage {player.chips}")
-         elif player.tally_cards() == 21:
-             player.chips +=  2/3*(self.bet)
-             print(f"wow! you have got a Black Jack! current wage : {player.chips}")
-         elif dealer.tally_cards() == 21:
-             player.chips -= bet
-             print("Black Jack for the dealer! You have lost!")
-         elif player.tally_cards() > dealer.tally_cards():
-             player.chips += self.bet
-             print( f"You win, current wage {player.chips}")
-         else:
-             player.chips -= bet
-             print(f"You have  lost! current wage {player.chips}")
 
 class Round:
     """
@@ -175,7 +200,7 @@ if __name__=="__main__":
 
           There will be one automated dealer called MrWhite
           and one player called Romeo The cat
-          The player is able to Hit or Stand
+          The player is only able to Hit or Stand
         """
      )
     ready = ""
@@ -186,35 +211,34 @@ if __name__=="__main__":
     if ready == "Yes":
         game_on = True
         deck = Deck()
-        player_one = Player(name="Romeo", role="guest", chips=42)
+        player = Player(name="Romeo", role="guest", chips=42)
         dealer = Player(name="MrWhite", role="dealer")
-        bet = 44
-        while bet > player_one.chips:
-            bet = int(input(
-                f"""
-                    MrWhite :
-                    Romeo, your current chips is {player_one.chips}.
-                    How much do you want to bet?  """))
     else:
-        print("Thank you, Bye then!")
+            print("Thank you, Bye then!")
 
 
     # start a round
     while game_on:
-        board = BoardGame(bet=bet)
-        Round(deck=deck, player=player_one,dealer=dealer)
-        board.set_initial_cards(player=player_one, dealer=dealer,
+        bet = 44
+        board = BoardGame()
+        while bet > player.chips:
+            bet =  board.set_bet_amount(player.chips)
+        board.bet = bet
+        Round(deck=deck, player=player, dealer=dealer)
+        board.set_initial_cards(player=player, dealer=dealer,
                                 deck=deck)
-        board.display_card(player_one)
+        board.display_card(player)
         board.display_card(dealer)
-        move = player_one.player_move()
+        move = player.set_move()
         while move == "Hit":
-            player_one.cards.append(deck.deal_one())
-            board.display_card(player_one)
-            move = player_one.player_move()
+            player.cards.append(deck.deal_one())
+            dealer.cards.append(deck.deal_one())
+            print(board.display_card(player))
+            print("The dealer cards: ", *dealer.cards[:0:-1])
+            move = player.set_move()
         else:
-            for card in dealer.cards:
-                print(card)
-            board.win_check(player=player_one, dealer=dealer)
-        if not player_one.play_again():
+            print(f"The whole dealer cards are: {dealer.values()}", *dealer.cards)
+            print(f"The whole player cards are: {player.values()}", *player.cards)
+            print(board.win_check(player, dealer))
+        if not player.play_again():
             game_on = False
