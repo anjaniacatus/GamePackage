@@ -105,9 +105,9 @@ class Player:
         replay = ""
         while replay  not in ["Yes", "No"]:
             replay = input("want to play again? Yes or No ")
-            if self.chips <= 5:
-                print("Sorry, but you don't have enough chips to bet!")
-                return False
+        if self.chips <= 5:
+            print("Sorry, but you don't have enough chips to bet!")
+            return False
         if replay == "Yes":
             return True
         return False
@@ -118,15 +118,18 @@ class BoardGame():
     setting up a round
     """
 
-    def __init__(self, bet=44, player_number=1):
+    def __init__(self, player_number=1):
         self.player_number=player_number
-        self.bet = bet
+        self.bet = 44
+        self.reset = False
 
     def set_bet_amount(self, player_chips):
         bet = 44
+        if self.reset:
+             bet = int(input("How much chips do you want to bet?: "))
         while bet > player_chips:
             bet = int(input("How much chips do you want to bet?: "))
-        return bet
+        self.bet = bet
 
     def set_initial_cards(self, player, dealer, deck):
         """
@@ -211,6 +214,7 @@ if __name__=="__main__":
     if ready == "Yes":
         game_on = True
         deck = Deck()
+        board = BoardGame()
         player = Player(name="Romeo", role="guest", chips=42)
         dealer = Player(name="MrWhite", role="dealer")
     else:
@@ -219,11 +223,7 @@ if __name__=="__main__":
 
     # start a round
     while game_on:
-        bet = 44
-        board = BoardGame()
-        while bet > player.chips:
-            bet =  board.set_bet_amount(player.chips)
-        board.bet = bet
+        board.set_bet_amount(player.chips)
         Round(deck=deck, player=player, dealer=dealer)
         board.set_initial_cards(player=player, dealer=dealer,
                                 deck=deck)
@@ -235,6 +235,10 @@ if __name__=="__main__":
             dealer.cards.append(deck.deal_one())
             print(board.display_card(player))
             print("The dealer cards: ", *dealer.cards[:0:-1])
+            if  player.values() > 21:
+                print("Sorry! You are busting ....")
+                player.chips -= board.bet
+                break
             move = player.set_move()
         else:
             print(f"The whole dealer cards are: {dealer.values()}", *dealer.cards)
@@ -242,3 +246,5 @@ if __name__=="__main__":
             print(board.win_check(player, dealer))
         if not player.play_again():
             game_on = False
+        else:
+            board.reset = True
