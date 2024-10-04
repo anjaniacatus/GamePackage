@@ -52,7 +52,7 @@ class Deck:
        deck_comp = ""
        for card in self.cards:
            deck_comp += "\n" + card.__str__()
-       return "The deck has: " +deck_comp
+       return f"The deck has: {deck_comp}"
 
     def shuffle_cards(self):
         """shuffle cards"""
@@ -61,6 +61,9 @@ class Deck:
     def deal_one(self):
         """get one card from the deck"""
         return self.cards.pop(0)
+
+    def __len__(self):
+        return len(self.cards)
 
 # set up the Player
 class Player:
